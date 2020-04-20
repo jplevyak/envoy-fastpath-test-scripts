@@ -1,0 +1,47 @@
+admin:
+  access_log_path: /tmp/admin_access-test_id.log
+  profile_path: /tmp/envoy-test_id.prof
+  address:
+    socket_address: { address: 127.0.0.1, port_value: 9011 }
+static_resources:
+  listeners:
+  - address:
+      socket_address:
+        address: 127.0.0.1
+        port_value: 9010
+    listener_filters_timeout: 1s
+    continue_on_listener_filters_timeout: true
+    listener_filters:
+    - name: "envoy.listener.tls_inspector"
+      typed_config: {}
+    - name: "envoy.listener.http_inspector"
+      typed_config: {}
+    filter_chains:
+    - filter_chain_match: {}
+      filters:
+      - name: envoy.tcp_proxy
+        config:
+          stat_prefix: ingress_tls
+          cluster: local_service
+          idle_timeout: 900s
+#tls_context:
+#        common_tls_context:
+#          tls_certificates:
+#            - certificate_chain:
+#                filename: ../envoy/test/config/integration/certs/servercert.pem
+#              private_key:
+#                filename: ../envoy/test/config/integration/certs/serverkey.pem
+  clusters:
+  - name: local_service
+    connect_timeout: 0.25s
+    type: strict_dns
+    lb_policy: round_robin
+    load_assignment:
+      cluster_name: local_service
+      endpoints:
+      - lb_endpoints:
+        - endpoint:
+            address:
+              socket_address:
+                address: 127.0.0.1
+                port_value: 9000
